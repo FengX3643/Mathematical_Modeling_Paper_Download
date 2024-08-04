@@ -1,3 +1,4 @@
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QApplication, QMessageBox, QFileDialog, QWidget,
                                QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout)
 from PySide6.QtUiTools import QUiLoader
@@ -11,6 +12,11 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import webbrowser
+from PySide6.QtCore import Signal,QObject
+class mySignal(QObject):
+    speed_of_progress_Refresh = Signal(int)
+    button_enable = Signal(bool)
+    info_tip = Signal(QWidget,str,str)
 class paper_downloader:
 
     def __init__(self):
@@ -28,8 +34,10 @@ class paper_downloader:
         self.ui.progressBar.setRange(0,100)
         self.ui.pushButton_3.clicked.connect(lambda: webbrowser.open("https://dxs.moe.gov.cn/zx/hd/sxjm/sxjmlw/qkt_sxjm_lw_lwzs.shtml"))
         self.workers = 1
-
-
+        self.mySignal = mySignal()
+        self.mySignal.speed_of_progress_Refresh.connect(self.ui.progressBar.setValue)
+        self.mySignal.button_enable.connect(self.ui.pushButton.setEnabled)
+        self.mySignal.info_tip.connect(QMessageBox.warning)
     def fill_in_the_text_box(self):
         self.ui.lineEdit_2.setText(self.select_folder())
     def handleCalc(self):
@@ -37,14 +45,16 @@ class paper_downloader:
         url = self.ui.lineEdit.text()
         pdf_path = self.ui.lineEdit_2.text()
         if not url:
-            QMessageBox.warning(self.ui, '警告', '请输入下载链接')
+            self.mySignal.info_tip.emit(self.ui, '警告', '请输入下载链接')
 
         else:
             if not pdf_path:
-                QMessageBox.warning(self.ui, '警告', '请输入保存路径')
+                self.mySignal.info_tip.emit(self.ui, '警告', '请输入保存路径')
                 return
             else:
-                self.down_(url)
+                t = threading.Thread(target=self.down_, args=(url,))
+                t.start()
+
 
     def get_imgs_thread(self, i, v):
         r = requests.get(v)
@@ -54,7 +64,7 @@ class paper_downloader:
             # 对于图片类型的通过r.content方式访问响应内容，将响应内容写入baidu.png中
             f.write(r.content)
     def down_(self, url):
-        self.ui.pushButton.setEnabled(False)
+        self.mySignal.button_enable.emit(False)
         txt_url, name = self.get_img_urls(url)
         for index,i in enumerate(txt_url):
             if i[:5] == 'https':
@@ -75,13 +85,13 @@ class paper_downloader:
                 except Exception as e:
                     # 窗口提示任务出错
 
-                    QMessageBox.warning(self.ui, '警告', f'任务出错: {e}')
+                    self.mySignal.info_tip.emit(self.ui, '警告', f'任务出错: {e}')
                     print(f'任务出错: {e}')
                 else:
 
                     completed_count += 1
                     print(f'已完成 {completed_count} 个任务')
-                    self.ui.progressBar.setValue(completed_count/len(txt_url)*99)
+                    self.mySignal.speed_of_progress_Refresh.emit(completed_count/len(txt_url)*99)
 
         folder_path = self.img_temp_folder
         folder_address = self.ui.lineEdit_2.text()
@@ -92,8 +102,8 @@ class paper_downloader:
         self.images_to_pdf( images, output_path)
         self.delete_folder_contents(folder_path)
         self.ui.progressBar.setValue(100)
-        QMessageBox.information(self.ui, '提示', '下载完成')
-        self.ui.pushButton.setEnabled(True)
+        self.mySignal.info_tip.emit(self.ui, '提示', '下载完成')
+        self.mySignal.button_enable.emit(True)
     def select_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self.ui, "选择文件夹")
         print(folder_path)
@@ -157,8 +167,9 @@ class paper_downloader:
             print(f"文件夹 '{folder_name}' 已创建。")
         else:
             print(f"文件夹 '{folder_name}' 已存在。")
-
-app = QApplication([])
-paper_downloader = paper_downloader()
-paper_downloader.ui.show()
-app.exec()
+if __name__ == '__main__':
+    app = QApplication([])
+    app.setWindowIcon(QIcon('f.ico'))
+    paper_downloader = paper_downloader()
+    paper_downloader.ui.show()
+    app.exec()
