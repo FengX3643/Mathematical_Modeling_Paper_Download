@@ -1,6 +1,6 @@
 # 数学建模国赛论文下载器
 ## 使用
-- 下载[压缩包](https://github.com/FengX3643/Mathematical_Modeling_Paper_Download/releases/download/1/default.zip)，解压到任意目录，双击运行`数学建模国赛论文下载器.exe`
+- 下载[压缩包](https://github.com/FengX3643/Mathematical_Modeling_Paper_Download/releases/download/2/default.zip)，解压到任意目录，双击运行`数学建模国赛论文下载器.exe`
 - 进入官网，选择需要下载的论文，复制到软件中，选择存放路径，点击下载。
 - 演示视频:
   ![演示视频](使用方法.gif)
