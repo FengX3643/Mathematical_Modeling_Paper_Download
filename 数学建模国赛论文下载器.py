@@ -33,6 +33,7 @@ class paper_downloader:
         self.ui.pushButton_2.clicked.connect(self.fill_in_the_text_box)
         self.ui.progressBar.setRange(0,100)
         self.ui.pushButton_3.clicked.connect(lambda: webbrowser.open("https://dxs.moe.gov.cn/zx/hd/sxjm/sxjmlw/qkt_sxjm_lw_lwzs.shtml"))
+        self.ui.label_3.setOpenExternalLinks(True)
         self.workers = 1
         self.mySignal = mySignal()
         self.mySignal.speed_of_progress_Refresh.connect(self.ui.progressBar.setValue)
@@ -173,3 +174,5 @@ if __name__ == '__main__':
     paper_downloader = paper_downloader()
     paper_downloader.ui.show()
     app.exec()
+    # 打包
+    ## pyinstaller 数学建模国赛论文下载器.py --noconsole --icon="f.ico"
